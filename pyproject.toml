@@ -8,3 +8,13 @@ dependencies = [
     "jinja2>=3.1.6",
     "requests>=2.32.5",
 ]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "single"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
