@@ -34,7 +34,7 @@ SYSTEM_PROMPT_WITH_SUB_AGENTS = """You have these agents at your disposal
 {% endfor %}
 
 Choose the appropiate agent to use and return in the format of a mapping that includes agent_name and the prompt for
-and the sub agent in the format.use valid json format
+the sub agent in the format.use valid json format
 {
 agent_name: name of the agent,
 prompt: prompt
