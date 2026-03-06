@@ -1,11 +1,18 @@
 import jinja2
 from pydantic import BaseModel
 
-#from tinyagent.schema import SubAgentResponse, ToolResponse
+from tinyagent.schema import Prompt
 
-SYSTEM_PROMPT = """Response schema: {{response_schema}}"""
+SYSTEM_PROMPT = """ Follow this schema for generating responses
+Response schema: {{response_schema}}
 
-SYSTEM_PROMPT_WITH_TOOLS = """You have these tools at your disposal
+Populate the response field to give simple response or when you have the final response
+Populate the tool_calls field if you need to call any tools
+Populate the sub_agent_calls field if you to call any sub agents
+Use the exit field when you think you have gathered the information and is ready to respond.
+"""
+
+TOOL_DEFINATIONS = """You have these tools at your disposal
 ---------------TOOLS---------------
 {% for tool_name,tool_metadata in tools.items() %}
     Name: {{tool_name}}
@@ -15,11 +22,11 @@ SYSTEM_PROMPT_WITH_TOOLS = """You have these tools at your disposal
 
 Choose the appropiate tool to use
 
-Response schema: {{response_schema}}
+
 """
 
 
-SYSTEM_PROMPT_WITH_SUB_AGENTS = """You have these agents at your disposal
+SUB_AGENTS_DEFINATIONS = """You have these agents at your disposal
 ---------------AGENTS---------------
 {% for agent_name,agent in agents.items() %}
     Name: {{agent_name}}
@@ -28,27 +35,23 @@ SYSTEM_PROMPT_WITH_SUB_AGENTS = """You have these agents at your disposal
 {% endfor %}
 
 Choose the appropiate agent to use
-
-Response schema: {{response_schema}}
 """
 
 
-class SystemPrompt:
-    def __init__(self, prompt: str | None = None):
-        self.prompt = '' if not prompt else prompt
+def generate_system_prompt(
+    system_prompt: Prompt | None = None,
+    response_type: BaseModel | None = None,
+    tools: dict | None = None,
+    sub_agents: dict | None = None,
+) -> Prompt:
+    system_prompt = Prompt(role='system', content='')
+    if response_type:
+        system_prompt.content += '\n' + jinja2.Template(SYSTEM_PROMPT).render(
+            response_schema=response_type.model_json_schema()
+        )
+    if tools:
+        system_prompt.content += '\n' + jinja2.Template(TOOL_DEFINATIONS).render(tools=tools)
+    if sub_agents:
+        system_prompt.content += '\n' + jinja2.Template(SUB_AGENTS_DEFINATIONS).render(agents=sub_agents)
 
-    def update_prompt(
-        self, response_type: BaseModel | None = None, tools: dict | None = None, sub_agents: dict | None = None
-    ):
-        if response_type:
-            self.prompt += '\n' + jinja2.Template(SYSTEM_PROMPT).render(
-                response_schema=response_type.model_json_schema()
-            )
-        if tools:
-            self.prompt += '\n' + jinja2.Template(SYSTEM_PROMPT_WITH_TOOLS).render(
-                tools=tools, response_schema=ToolResponse.model_json_schema()
-            )
-        if sub_agents:
-            self.prompt += '\n' + jinja2.Template(SYSTEM_PROMPT_WITH_SUB_AGENTS).render(
-                agents=sub_agents, response_schema=SubAgentResponse.model_json_schema()
-            )
+    return system_prompt

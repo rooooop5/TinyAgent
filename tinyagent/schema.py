@@ -1,6 +1,4 @@
-from typing import Any
-
-from pydantic import UUID4, BaseModel, Field, Json
+from pydantic import BaseModel, Field, Json
 
 
 class ToolCall(BaseModel):
@@ -9,14 +7,15 @@ class ToolCall(BaseModel):
 
 
 class SubAgentCall(BaseModel):
-    agent_name: UUID4 = Field(description='agent_name')
+    agent_name: str = Field(description='agent_name')
     prompt: str = Field(description='Prompt for the sub agent')
 
 
 class Content(BaseModel):
-    response: Any | None = None
-    tool_calls: list[ToolCall] = []
-    sub_agent_calls: list[SubAgentCall] = []
+    response: str | None = Field(default=None, description='Response')
+    tool_calls: list[ToolCall] = Field(default=[], description='list of tool calls')
+    sub_agent_calls: list[SubAgentCall] = Field(default=[], description='list of sub agent calls')
+    exit: bool = Field(default=False, description='Continue evaluation or not')
 
 
 class ModelResponse(BaseModel):
@@ -27,4 +26,4 @@ class ModelResponse(BaseModel):
 
 class Prompt(BaseModel):
     role: str
-    content: Any
+    content: str
