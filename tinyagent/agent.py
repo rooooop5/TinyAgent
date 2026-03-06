@@ -43,7 +43,7 @@ class Agent:
                 system_prompt=self.system_prompt, response_type=self.response_type, tools=self.tools, sub_agents=self.sub_agents
             )
         else:
-            self.system_prompt.content=generate_system_prompt(system_prompt=self.system_prompt,tools=self.tools,sub_agents=self.sub_agents)
+            self.system_prompt=generate_system_prompt(system_prompt=self.system_prompt,tools=self.tools,sub_agents=self.sub_agents)
         user_prompt = Prompt(role='user', content=prompt)
         self.memory.update(self.system_prompt)
         self.memory.update(user_prompt)
