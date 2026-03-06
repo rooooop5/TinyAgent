@@ -1,12 +1,10 @@
 from tinyagent.schema import Prompt
 from typing import List
 
+
 class Memory:
     def __init__(self):
-        self.memory: List[dict]=[]
+        self.messages: list[dict] = []
 
-    def update_memory(self,prompt:Prompt):
-        self.memory.append(prompt.model_dump())
-
-
-
+    def update(self, prompt: Prompt):
+        self.messages.append(prompt.model_dump())

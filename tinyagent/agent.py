@@ -10,22 +10,6 @@ from tinyagent.tool import Tool
 from tinyagent.memory import Memory
 
 
-class Memory:
-    def __init__(self):
-        self.messages: list[dict] = []
-
-    def update(self, prompt: Prompt):
-        self.messages.append(prompt.model_dump())
-
-
-class Memory:
-    def __init__(self):
-        self.messages: list[dict] = []
-
-    def update(self, prompt: Prompt):
-        self.messages.append(prompt.model_dump())
-
-
 class Agent:
     def __init__(
         self,
@@ -41,7 +25,6 @@ class Agent:
         self.memory = Memory()
         self.response_type = response_type
         self.system_prompt = system_prompt
-        self.memory = Memory()
 
         if self.system_prompt and isinstance(self.system_prompt, str):
             self.system_prompt = Prompt(role='system', content=self.system_prompt)
