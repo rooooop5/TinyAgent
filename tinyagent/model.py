@@ -10,7 +10,7 @@ class Model:
         self.name = name
         self.system_prompt = system_prompt
 
-    def prompt(self, query: str, chat_history: ChatHistory):
+    def prompt(self, query: str, chat_history: ChatHistory | None):
         user_message = Message(role='user', content=query)
         chat_history.update_history(user_message)
         if self.system_prompt and not chat_history.is_sysytem_prompt_present():
@@ -22,5 +22,5 @@ class Model:
             r = response.json()
             pprint(r, indent=2)
             content = r['message']['content']
-            chat_history.update_history(Message(role="assistant",content=content))
+            chat_history.update_history(Message(role='assistant', content=content))
             return content
