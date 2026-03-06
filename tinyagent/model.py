@@ -1,15 +1,14 @@
 import os
 import requests
 
-from tinyagent.response import ModelResponse
+from tinyagent.schema import ModelResponse
 
 
 class Model:
     def __init__(self, name: str, system_prompt: str | None = None):
         self.name = name
 
-    def prompt(self, query: str):
-        messages = [{'role': 'user', 'content': query}]
+    def prompt(self, messages: list):
         data = {
             'model': self.name,
             'messages': messages,

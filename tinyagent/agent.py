@@ -4,7 +4,7 @@ from typing import Callable, Mapping, Self
 from pydantic import BaseModel
 
 from tinyagent.model import Model
-from tinyagent.response import ModelResponse
+from tinyagent.schema import ModelResponse,Prompt
 from tinyagent.system_prompt import SystemPrompt
 from tinyagent.tool import Tool
 from tinyagent.memory import Memory
@@ -16,20 +16,19 @@ class Agent:
         self.description = description
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
-        #self.memory_enabled = False
-        #self.memory=Memory()
+        self.memory=Memory()
         self.response_type = response_type
         self.system_prompt = SystemPrompt()
 
     def run(self, query: str):
         self.system_prompt.update_prompt(response_type=self.response_type, tools=self.tools, sub_agents=self.sub_agents)
-        if self.tools:
-            return self._prompt_with_tool(query)
-        if self.sub_agents:
-            return self._prompt_with_sub_agents(query)
+        # if self.tools:
+        #     return self._prompt_with_tool(query)
+        # if self.sub_agents:
+        #     return self._prompt_with_sub_agents(query)
         # if self.memory_enabled:
-        #     return self._prompt_with_memory(query)
-        return self.model.prompt(query)
+        return self._prompt_with_memory(query)
+        #return self.model.prompt(query)
     
     # def add_system_prompt(self,query):
     #     if self.system_prompt.prompt:
@@ -58,7 +57,13 @@ class Agent:
         return sub_agent.run(prompt)
 
     def _prompt_with_memory(self, query: str):
-        pass
+        messages=[]
+        messages.append(self.memory.memory)
+        response=self.model.prompt(messages=messages.append({"role":"user","content":query}))
+        self.memory.update_memory(Prompt(role="user",content=query))
+        self.memory.update_memory(Prompt(role="assistant",content=response) )
+        return response
+        
 
     def add_tool(self, func: Callable) -> None:
         self.tools[func.__name__] = Tool(func.__name__, func.__doc__, func)

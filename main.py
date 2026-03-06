@@ -1,5 +1,5 @@
 from tinyagent import Agent, Model
-from tinyagent.memory import ChatHistory
+
 import os
 if __name__ == '__main__':
     # model = Model('gpt-oss:120b')
@@ -35,7 +35,10 @@ if __name__ == '__main__':
     # print(agent.run('Add 2 and 6'))
     print(os.getenv("OLLAMA_API_KEY"))
     my_model=Model('gemini-3-flash-preview:latest')
-    chat_history=ChatHistory()
-    print(my_model.prompt("What is your name?",chat_history=chat_history))
-   
+    my_agent=Agent(model=my_model)
+    while(1):
+        query=input("You:")
+        respone=my_agent.run(query)
+        print(respone)
+
     

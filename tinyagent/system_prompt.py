@@ -1,7 +1,7 @@
 import jinja2
 from pydantic import BaseModel
 
-from tinyagent.response import SubAgentResponse, ToolResponse
+#from tinyagent.schema import SubAgentResponse, ToolResponse
 
 SYSTEM_PROMPT = """Response schema: {{response_schema}}"""
 
