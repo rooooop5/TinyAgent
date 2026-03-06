@@ -20,5 +20,4 @@ class Model:
             'https://ollama.com/api/chat', json=data, headers={'Authorization': f'Bearer {os.getenv("OLLAMA_API_KEY")}'}
         ) as response:
             model_response = ModelResponse(**response.json()['message'])
-            print(model_response)
             return model_response
