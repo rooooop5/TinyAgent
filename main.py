@@ -1,5 +1,5 @@
 from tinyagent import Agent, Model
-from tinyagent.chat_history import ChatHistory
+from tinyagent.memory import ChatHistory
 import os
 if __name__ == '__main__':
     # model = Model('gpt-oss:120b')
@@ -37,5 +37,5 @@ if __name__ == '__main__':
     my_model=Model('gemini-3-flash-preview:latest')
     chat_history=ChatHistory()
     print(my_model.prompt("What is your name?",chat_history=chat_history))
-    print(chat_history.history)
+   
     

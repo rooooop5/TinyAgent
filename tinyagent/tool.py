@@ -1,5 +1,8 @@
+from typing import Callable
+
+
 class Tool:
-    def __init__(self, name, description, func):
+    def __init__(self, name: str, description: str, func: Callable):
         self.name = name
         self.description = description
         self.func = func
