@@ -1,54 +1,26 @@
-import json
 import uuid
 from typing import Callable, Mapping, Self
 
-import jinja2
+from pydantic import BaseModel
 
 from tinyagent.model import Model
+from tinyagent.response import ModelResponse
+from tinyagent.system_prompt import SystemPrompt
 from tinyagent.tool import Tool
-
-SYSTEM_PROMPT_WITH_TOOLS = """You have these tools at your disposal
----------------TOOLS---------------
-{% for tool_name,tool_metadata in tools.items() %}
-    Name: {{tool_name}}
-    Desciption:
-    {{tool_metadata.description}}
-{% endfor %}
-
-Choose the appropiate tool to use and return in the format of a mapping that includes tool_name
-and the tool arguments in the format.Use valid json format
-{
-tool_name: name of the tool,
-tool_args: {arg_name: arg_value}
-}
-"""
-
-
-SYSTEM_PROMPT_WITH_SUB_AGENTS = """You have these agents at your disposal
----------------AGENTS---------------
-{% for agent_name,agent in agents.items() %}
-    Name: {{agent_name}}
-    Desciption:
-    {{agent.description}}
-{% endfor %}
-
-Choose the appropiate agent to use and return in the format of a mapping that includes agent_name and the prompt for
-the sub agent in the format.use valid json format
-{
-agent_name: name of the agent,
-prompt: prompt
-}
-"""
 
 
 class Agent:
-    def __init__(self, model: Model, description: str | None = None):
+    def __init__(self, model: Model, description: str | None = None, response_type: BaseModel | None = None):
         self.model = model
         self.description = description
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
+        self.response_type = response_type
+        self.system_prompt = SystemPrompt()
 
     def run(self, query: str):
+        self.system_prompt.update_prompt(response_type=self.response_type, tools=self.tools, sub_agents=self.sub_agents)
+        self.model.system_prompt = self.system_prompt.prompt
         if self.tools:
             return self._prompt_with_tool(query)
         if self.sub_agents:
@@ -56,21 +28,19 @@ class Agent:
         return self.model.prompt(query)
 
     def _prompt_with_tool(self, query: str):
-        self.model.system_prompt = jinja2.Template(SYSTEM_PROMPT_WITH_TOOLS).render(tools=self.tools)
-        tool_details = self.model.prompt(query)
-        return self._run_tool(tool_details)
+        response = self.model.prompt(query)
+        return self._run_tool(response)
 
-    def _run_tool(self, tool_details: dict):
-        tool_details = json.loads(tool_details)
+    def _run_tool(self, tool_details: ModelResponse):
+        tool_details = tool_details.message.content
         name = tool_details['tool_name']
         tool_args = tool_details['tool_args']
         tool_result = self.tools[name].func(**tool_args)
         return tool_result
 
     def _prompt_with_sub_agents(self, query: str):
-        self.model.system_prompt = jinja2.Template(SYSTEM_PROMPT_WITH_SUB_AGENTS).render(agents=self.sub_agents)
-        sub_agent_details = self.model.prompt(query)
-        sub_agent_details = json.loads(sub_agent_details)
+        response = self.model.prompt(query)
+        sub_agent_details = response.message.content
         sub_agent_name = sub_agent_details['agent_name']
         prompt = sub_agent_details['prompt']
         sub_agent = self.sub_agents[sub_agent_name]
@@ -83,8 +53,8 @@ class Agent:
         self.add_tool(func)
         return func
 
-    def add_sub_agent(self, agent: Self):
+    def add_sub_agent(self, agent: Self) -> None:
         self.sub_agents[str(uuid.uuid4())] = agent
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'Agent(model={self.model.name} tools={[tool for tool in self.tools.values()]})'
