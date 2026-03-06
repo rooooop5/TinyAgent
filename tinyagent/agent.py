@@ -6,6 +6,7 @@ import jinja2
 
 from tinyagent.model import Model
 from tinyagent.tool import Tool
+from tinyagent.chat_history import ChatHistory
 
 SYSTEM_PROMPT_WITH_TOOLS = """You have these tools at your disposal
 ---------------TOOLS---------------
@@ -47,12 +48,16 @@ class Agent:
         self.description = description
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
+        self.context = False
+        self.context = ChatHistory()
 
     def run(self, query: str):
         if self.tools:
             return self._prompt_with_tool(query)
         if self.sub_agents:
             return self._prompt_with_sub_agents(query)
+        if self.context:
+            return self._prompt_with_context(query)
         return self.model.prompt(query)
 
     def _prompt_with_tool(self, query: str):
@@ -75,6 +80,9 @@ class Agent:
         prompt = sub_agent_details['prompt']
         sub_agent = self.sub_agents[sub_agent_name]
         return sub_agent.run(prompt)
+
+    def _prompt_with_context(self, query: str):
+        pass
 
     def add_tool(self, func: Callable) -> None:
         self.tools[func.__name__] = Tool(func.__name__, func.__doc__, func)
