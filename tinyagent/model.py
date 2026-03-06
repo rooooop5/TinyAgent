@@ -2,18 +2,14 @@ import os
 
 import requests
 
-from tinyagent.response import ModelResponse
+from tinyagent.schema import ModelResponse
 
 
 class Model:
-    def __init__(self, name: str, system_prompt: str | None = None):
+    def __init__(self, name: str):
         self.name = name
-        self.system_prompt = system_prompt
 
-    def prompt(self, query: str):
-        messages = [{'role': 'user', 'content': query}]
-        if self.system_prompt:
-            messages.append({'role': 'system', 'content': self.system_prompt})
+    def prompt(self, messages: list[dict]):
         data = {
             'model': self.name,
             'messages': messages,
@@ -24,5 +20,6 @@ class Model:
         with requests.post(
             'https://ollama.com/api/chat', json=data, headers={'Authorization': f'Bearer {os.getenv("OLLAMA_API_KEY")}'}
         ) as response:
-            model_response = ModelResponse(**response.json())
+            model_response = ModelResponse(**response.json()['message'])
+            print(model_response)
             return model_response

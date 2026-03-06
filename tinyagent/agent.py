@@ -4,50 +4,75 @@ from typing import Callable, Mapping, Self
 from pydantic import BaseModel
 
 from tinyagent.model import Model
-from tinyagent.response import ModelResponse
-from tinyagent.system_prompt import SystemPrompt
+from tinyagent.schema import Content, ModelResponse, Prompt
+from tinyagent.system_prompt import generate_system_prompt
 from tinyagent.tool import Tool
 
 
+class Memory:
+    def __init__(self):
+        self.messages: list[dict] = []
+
+    def update(self, prompt: Prompt):
+        self.messages.append(prompt.model_dump())
+
+
 class Agent:
-    def __init__(self, model: Model, description: str | None = None, response_type: BaseModel | None = None):
+    def __init__(
+        self,
+        model: Model,
+        system_prompt: Prompt | str | None = None,
+        description: str | None = None,
+        response_type: BaseModel | None = None,
+    ):
         self.model = model
         self.description = description
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
         self.response_type = response_type
-        self.system_prompt = SystemPrompt()
+        self.system_prompt = system_prompt
+        self.memory = Memory()
 
-    def run(self, query: str):
-        self.system_prompt.update_prompt(response_type=self.response_type, tools=self.tools, sub_agents=self.sub_agents)
-        self.model.system_prompt = self.system_prompt.prompt
-        if self.tools:
-            return self._prompt_with_tool(query)
-        if self.sub_agents:
-            return self._prompt_with_sub_agents(query)
-        return self.model.prompt(query)
+        if self.system_prompt and isinstance(self.system_prompt, str):
+            self.system_prompt = Prompt(role='system', content=self.system_prompt)
 
-    def _prompt_with_tool(self, query: str):
-        response = self.model.prompt(query)
-        return self._run_tool(response)
+    def run(self, prompt: str):
+        self.system_prompt = generate_system_prompt(
+            system_prompt=self.system_prompt, response_type=Content, tools=self.tools, sub_agents=self.sub_agents
+        )
+        user_prompt = Prompt(role='user', content=prompt)
+        self.memory.update(self.system_prompt)
+        self.memory.update(user_prompt)
 
-    def _run_tool(self, tool_details: ModelResponse):
-        tool_details = tool_details.message.content
-        name = tool_details['tool_name']
-        tool_args = tool_details['tool_args']
-        tool_result = self.tools[name].func(**tool_args)
-        return tool_result
+        resp = self._loop()
+        return resp
 
-    def _prompt_with_sub_agents(self, query: str):
-        response = self.model.prompt(query)
-        sub_agent_details = response.message.content
-        sub_agent_name = sub_agent_details['agent_name']
-        prompt = sub_agent_details['prompt']
-        sub_agent = self.sub_agents[sub_agent_name]
-        return sub_agent.run(prompt)
+    def _loop(self):
+        while True:
+            resp: ModelResponse = self.model.prompt(self.memory.messages)
+
+            if resp.content.exit:
+                return resp.content.response
+
+            self.memory.update(Prompt(role=resp.role, content=resp.content.model_dump_json()))
+
+            if resp.content.tool_calls:
+                for tool_call in resp.content.tool_calls:
+                    tool_name = tool_call.tool_name
+                    tool_args = tool_call.tool_args
+                    tool_result = self.tools[tool_name].func(**tool_args)
+                    self.memory.update(Prompt(role='tool', content=str(tool_result)))
+
+            if resp.content.sub_agent_calls:
+                for sub_agent_call in resp.content.sub_agent_calls:
+                    sub_agent_name = sub_agent_call.agent_name
+                    sub_agent_prompt = sub_agent_call.prompt
+                    sub_agent = self.sub_agents[sub_agent_name]
+                    sub_agent_resp = sub_agent.run(sub_agent_prompt)
+                    self.memory.update(Prompt(role='tool', content=sub_agent_resp))
 
     def add_tool(self, func: Callable) -> None:
-        self.tools[func.__name__] = Tool(func.__name__, func.__doc__, func)
+        self.tools[str(uuid.uuid4())] = Tool(func.__name__, func.__doc__, func)
 
     def tool(self, func: Callable) -> Callable:
         self.add_tool(func)
