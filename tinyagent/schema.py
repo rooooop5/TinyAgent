@@ -30,4 +30,4 @@ class Prompt(BaseModel):
     content: str
         
     def __add__(self,other:Prompt):
-        self.content += self.content + '\n' + other.content
+            self.content+='\n'+other.content

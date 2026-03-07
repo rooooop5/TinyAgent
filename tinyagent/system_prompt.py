@@ -1,7 +1,8 @@
 import jinja2
 from pydantic import BaseModel
 
-from tinyagent.schema import Prompt,Content
+from tinyagent.schema import Prompt, Content
+
 SYSTEM_PROMPT_WITHOUT_RESPONSE_FORMAT = """ Follow this schema for generating responses
 Response schema: {{response_schema}}
 
@@ -11,7 +12,7 @@ Populate the sub_agent_calls field if you to call any sub agents
 Use the exit field when you think you have gathered the information and is ready to respond.
 """
 
-SYSTEM_PROMPT_WITH_RESPONSE_FORMAT=""" Follow this schema for generating responses
+SYSTEM_PROMPT_WITH_RESPONSE_FORMAT = """ Follow this schema for generating responses
 Response schema: {{response_schema}}
 
 Populate the response field to give simple response or when you have the final response
@@ -57,19 +58,20 @@ Choose the appropiate agent to use
 
 
 def generate_system_prompt(
-    system_prompt: Prompt | None = None,
+    system_prompt: Prompt,
     response_type: BaseModel | None = None,
     tools: dict | None = None,
     sub_agents: dict | None = None,
 ) -> Prompt:
-    
-    system_prompt = Prompt(role='system', content='')
+
     if response_type:
-        system_prompt.content += '\n' + jinja2.Template(SYSTEM_PROMPT_WITH_RESPONSE_FORMAT).render(response_schema=Content.model_json_schema(),
-            response_format=response_type.model_json_schema()
+        system_prompt.content += '\n' + jinja2.Template(SYSTEM_PROMPT_WITH_RESPONSE_FORMAT).render(
+            response_schema=Content.model_json_schema(), response_format=response_type.model_json_schema()
         )
     else:
-        system_prompt.content+='\n' + jinja2.Template(SYSTEM_PROMPT_WITHOUT_RESPONSE_FORMAT).render(response_schema=Content.model_json_schema())
+        system_prompt.content += '\n' + jinja2.Template(SYSTEM_PROMPT_WITHOUT_RESPONSE_FORMAT).render(
+            response_schema=Content.model_json_schema()
+        )
     if tools:
         system_prompt.content += '\n' + jinja2.Template(TOOL_DEFINATIONS).render(tools=tools)
     if sub_agents:
