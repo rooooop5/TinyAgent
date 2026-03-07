@@ -4,7 +4,7 @@ from typing import Callable, Mapping, Self
 from pydantic import BaseModel
 
 from tinyagent.model import Model
-from tinyagent.schema import Content, ModelResponse, Prompt
+from tinyagent.schema import ModelResponse, Prompt
 from tinyagent.system_prompt import generate_system_prompt
 from tinyagent.tool import Tool
 from tinyagent.memory import Memory
@@ -27,16 +27,15 @@ class Agent:
         self.system_prompt = system_prompt
 
         if self.system_prompt and isinstance(self.system_prompt, str):
-            self.system_prompt = Prompt(role='system', content=self.system_prompt)
+            self.system_prompt = Prompt(role="system",content=self.system_prompt)
 
     def run(self, prompt: str):
-        print(self.system_prompt)
         if self.response_type:
-            self.system_prompt= generate_system_prompt(
+            self.system_prompt.update( generate_system_prompt(
                 system_prompt=self.system_prompt, response_type=self.response_type, tools=self.tools, sub_agents=self.sub_agents
-            )
+            ))
         else:
-            self.system_prompt=generate_system_prompt(system_prompt=self.system_prompt,tools=self.tools,sub_agents=self.sub_agents)
+            self.system_prompt.update(generate_system_prompt(system_prompt=self.system_prompt,tools=self.tools,sub_agents=self.sub_agents))
         user_prompt = Prompt(role='user', content=prompt)
         self.memory.update(self.system_prompt)
         self.memory.update(user_prompt)
