@@ -23,23 +23,15 @@ class Agent:
         model: Model,
         system_prompt: Prompt | str | None = None,
         description: str | None = None,
-        response_format: BaseModel | None = None,
+        response_type: BaseModel | None = None,
     ):
         self.model = model
         self.description = description
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
-<<<<<<< HEAD
         self.response_type = response_type
-=======
         self.memory = Memory()
-        self.response_format = response_format
-<<<<<<< HEAD
->>>>>>> ecb0d1f (feat: add response format validation and retry mechanism)
-        self.system_prompt = system_prompt
-        self.memory = Memory()
-=======
->>>>>>> eacc6a7 (Fixed Nonetype issue of system prompt and tested response format with tool calls)
+    
 
         if system_prompt and isinstance(system_prompt, str):
             system_prompt = Prompt(role='system', content=system_prompt)
@@ -47,13 +39,14 @@ class Agent:
             system_prompt = Prompt(role='system', content='')
 
         self.system_prompt = system_prompt
+        self.memory = Memory()
 
     def run(self, prompt: str):
-        if self.response_format:
+        if self.response_type:
             self.system_prompt + (
                 generate_system_prompt(
                     system_prompt=self.system_prompt,
-                    response_type=self.response_format,
+                    response_type=self.response_type,
                     tools=self.tools,
                     sub_agents=self.sub_agents,
                 )
