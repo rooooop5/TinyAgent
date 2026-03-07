@@ -31,6 +31,6 @@ class Prompt(BaseModel):
     role: str
     content: str
     tool_call_id: str | None = None
-
-    def update(self, prompt: Prompt):
-        self.content += self.content + '\n' + prompt.content
+        
+    def __add__(self,other:Prompt):
+        self.content += self.content + '\n' + other.content
