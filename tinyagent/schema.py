@@ -33,4 +33,4 @@ class Prompt(BaseModel):
     tool_call_id: str | None = None
         
     def __add__(self,other:Prompt):
-        self.content += self.content + '\n' + other.content
+            self.content+='\n'+other.content

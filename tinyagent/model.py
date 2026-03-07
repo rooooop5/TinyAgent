@@ -2,7 +2,7 @@ import os
 from pprint import pprint
 
 import requests
-
+from pprint import pprint
 from tinyagent.schema import ModelResponse
 
 
@@ -22,5 +22,6 @@ class Model:
         with requests.post(
             'https://ollama.com/api/chat', json=data, headers={'Authorization': f'Bearer {self.api_key}'}
         ) as response:
+            pprint(response.json())
             model_response = ModelResponse(**response.json()['message'])
             return model_response

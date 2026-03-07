@@ -34,12 +34,19 @@ class Agent:
 =======
         self.memory = Memory()
         self.response_format = response_format
+<<<<<<< HEAD
 >>>>>>> ecb0d1f (feat: add response format validation and retry mechanism)
         self.system_prompt = system_prompt
         self.memory = Memory()
+=======
+>>>>>>> eacc6a7 (Fixed Nonetype issue of system prompt and tested response format with tool calls)
 
-        if self.system_prompt and isinstance(self.system_prompt, str):
-            self.system_prompt = Prompt(role='system', content=self.system_prompt)
+        if system_prompt and isinstance(system_prompt, str):
+            system_prompt = Prompt(role='system', content=system_prompt)
+        else:
+            system_prompt = Prompt(role='system', content='')
+
+        self.system_prompt = system_prompt
 
     def run(self, prompt: str):
         if self.response_format:
@@ -52,7 +59,7 @@ class Agent:
                 )
             )
         else:
-            self.system_prompt+(
+            self.system_prompt + (
                 generate_system_prompt(system_prompt=self.system_prompt, tools=self.tools, sub_agents=self.sub_agents)
             )
         user_prompt = Prompt(role='user', content=prompt)
