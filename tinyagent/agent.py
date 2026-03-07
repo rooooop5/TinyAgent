@@ -1,7 +1,7 @@
 import uuid
 from typing import Callable, Mapping, Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from tinyagent.model import Model
 from tinyagent.schema import ModelResponse, Prompt
@@ -23,26 +23,38 @@ class Agent:
         model: Model,
         system_prompt: Prompt | str | None = None,
         description: str | None = None,
-        response_type: BaseModel | None = None,
+        response_format: BaseModel | None = None,
     ):
         self.model = model
         self.description = description
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
+<<<<<<< HEAD
         self.response_type = response_type
+=======
+        self.memory = Memory()
+        self.response_format = response_format
+>>>>>>> ecb0d1f (feat: add response format validation and retry mechanism)
         self.system_prompt = system_prompt
         self.memory = Memory()
 
         if self.system_prompt and isinstance(self.system_prompt, str):
-            self.system_prompt = Prompt(role="system",content=self.system_prompt)
+            self.system_prompt = Prompt(role='system', content=self.system_prompt)
 
     def run(self, prompt: str):
-        if self.response_type:
-            self.system_prompt.update( generate_system_prompt(
-                system_prompt=self.system_prompt, response_type=self.response_type, tools=self.tools, sub_agents=self.sub_agents
-            ))
+        if self.response_format:
+            self.system_prompt.update(
+                generate_system_prompt(
+                    system_prompt=self.system_prompt,
+                    response_type=self.response_format,
+                    tools=self.tools,
+                    sub_agents=self.sub_agents,
+                )
+            )
         else:
-            self.system_prompt.update(generate_system_prompt(system_prompt=self.system_prompt,tools=self.tools,sub_agents=self.sub_agents))
+            self.system_prompt.update(
+                generate_system_prompt(system_prompt=self.system_prompt, tools=self.tools, sub_agents=self.sub_agents)
+            )
         user_prompt = Prompt(role='user', content=prompt)
         self.memory.update(self.system_prompt)
         self.memory.update(user_prompt)
@@ -52,8 +64,7 @@ class Agent:
 
     def _loop(self):
         while True:
-            resp: ModelResponse = self.model.prompt(self.memory.messages)
-
+            resp=self._get_valid_response()
             if resp.content.exit:
                 return resp.content.response
 
@@ -73,6 +84,22 @@ class Agent:
                     sub_agent = self.sub_agents[sub_agent_id]
                     sub_agent_resp = sub_agent.run(sub_agent_prompt)
                     self.memory.update(Prompt(role='tool', tool_call_id=sub_agent_id, content=sub_agent_resp))
+
+    def _get_valid_response(self):
+        for _ in range(3):
+            resp: ModelResponse = self.model.prompt(self.memory.messages)
+            if not self.response_format:
+                return resp
+            if self._validate_response_format(resp.content.response):
+                return resp
+        raise ValueError("Unable to provide structured output")
+    
+    def _validate_response_format(self,response):
+        try:
+            self.response_format.model_validate(response)
+            return True
+        except ValidationError:
+            return False
 
     def add_tool(self, func: Callable) -> None:
         self.tools[str(uuid.uuid4())] = Tool(func.__name__, func.__doc__, func)
