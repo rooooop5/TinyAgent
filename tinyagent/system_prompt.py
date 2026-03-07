@@ -62,6 +62,7 @@ def generate_system_prompt(
     tools: dict | None = None,
     sub_agents: dict | None = None,
 ) -> Prompt:
+    
     system_prompt = Prompt(role='system', content='')
     if response_type:
         system_prompt.content += '\n' + jinja2.Template(SYSTEM_PROMPT_WITH_RESPONSE_FORMAT).render(response_schema=Content.model_json_schema(),

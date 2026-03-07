@@ -28,6 +28,6 @@ class ModelResponse(BaseModel):
 class Prompt(BaseModel):
     role: str
     content: str
-
-    def update(self, prompt: Prompt):
-        self.content += self.content + '\n' + prompt.content
+        
+    def __add__(self,other:Prompt):
+        self.content += self.content + '\n' + other.content

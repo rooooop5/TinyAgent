@@ -31,7 +31,7 @@ class Agent:
 
     def run(self, prompt: str):
         if self.response_format:
-            self.system_prompt.update(
+            self.system_prompt + (
                 generate_system_prompt(
                     system_prompt=self.system_prompt,
                     response_type=self.response_format,
@@ -40,7 +40,7 @@ class Agent:
                 )
             )
         else:
-            self.system_prompt.update(
+            self.system_prompt+(
                 generate_system_prompt(system_prompt=self.system_prompt, tools=self.tools, sub_agents=self.sub_agents)
             )
         user_prompt = Prompt(role='user', content=prompt)
@@ -52,7 +52,7 @@ class Agent:
 
     def _loop(self):
         while True:
-            resp=self._get_valid_response()
+            resp = self._get_valid_response()
             if resp.content.exit:
                 return resp.content.response
 
@@ -80,9 +80,9 @@ class Agent:
                 return resp
             if self._validate_response_format(resp.content.response):
                 return resp
-        raise ValueError("Unable to provide structured output")
-    
-    def _validate_response_format(self,response):
+        raise ValueError('Unable to provide structured output')
+
+    def _validate_response_format(self, response):
         try:
             self.response_format.model_validate(response)
             return True
