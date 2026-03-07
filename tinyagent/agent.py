@@ -16,7 +16,6 @@ class Memory:
     def update(self, prompt: Prompt):
         self.messages.append(prompt.model_dump())
 
-
 class Agent:
     def __init__(
         self,
@@ -75,7 +74,7 @@ class Agent:
                     tool_id = tool_call.tool_id
                     tool_args = tool_call.tool_args
                     tool_result = self.tools[tool_id](**tool_args)
-                    self.memory.update(Prompt(role='tool', tool_id=tool_id, content=str(tool_result)))
+                    self.memory.update(Prompt(role='tool', tool_call_id=tool_id, content=str(tool_result)))
 
             if resp.content.sub_agent_calls:
                 for sub_agent_call in resp.content.sub_agent_calls:
@@ -88,7 +87,7 @@ class Agent:
     def _get_valid_response(self):
         for _ in range(3):
             resp: ModelResponse = self.model.prompt(self.memory.messages)
-            if not self.response_format:
+            if not self.response_type:
                 return resp
             if self._validate_response_format(resp.content.response):
                 return resp
@@ -96,7 +95,7 @@ class Agent:
 
     def _validate_response_format(self, response):
         try:
-            self.response_format.model_validate(response)
+            self.response_type.model_validate(response)
             return True
         except ValidationError:
             return False
