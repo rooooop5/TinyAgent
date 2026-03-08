@@ -10,6 +10,12 @@ Populate the response field to give simple response or when you have the final r
 Populate the tool_calls field if you need to call any tools
 Populate the sub_agent_calls field if you to call any sub agents
 Use the exit field when you think you have gathered the information and is ready to respond.
+
+Consider the latest user message as the highest priority.
+Always reference and build upon the full conversation history.
+Remember details, preferences, and goals shared earlier.
+Treat every response as a continuation of an ongoing conversation, not a fresh start.
+
 """
 
 SYSTEM_PROMPT_WITH_RESPONSE_FORMAT = """ Follow this schema for generating responses
@@ -29,6 +35,11 @@ Rules:
 Populate the tool_calls field if you need to call any tools
 Populate the sub_agent_calls field if you to call any sub agents
 Use the exit field when you think you have gathered the information and is ready to respond.
+
+Consider the latest user message as the highest priority.
+Always reference and build upon the full conversation history.
+Remember details, preferences, and goals shared earlier.
+Treat every response as a continuation of an ongoing conversation, not a fresh start.
 """
 
 TOOL_DEFINATIONS = """You have these tools at your disposal

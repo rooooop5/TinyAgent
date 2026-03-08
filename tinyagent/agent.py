@@ -1,6 +1,6 @@
 import uuid
 from typing import Callable, Mapping, Self
-
+from pprint import pprint
 from pydantic import BaseModel, ValidationError
 
 from tinyagent.model import Model
@@ -13,16 +13,18 @@ from tinyagent.memory import Memory
 class Agent:
     def __init__(
         self,
+        name: str,
         model: Model,
         system_prompt: Prompt | str | None = None,
         description: str | None = None,
         response_format: BaseModel | None = None,
     ):
+        self.name = name
         self.model = model
         self.description = description
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
-        self.memory = Memory()
+        self.memory = Memory(self.name)
         self.response_format = response_format
 
         if system_prompt and isinstance(system_prompt, str):
@@ -31,8 +33,6 @@ class Agent:
             system_prompt = Prompt(role='system', content='')
 
         self.system_prompt = system_prompt
-
-    def run(self, prompt: str):
         if self.response_format:
             self.system_prompt + (
                 generate_system_prompt(
@@ -46,10 +46,11 @@ class Agent:
             self.system_prompt + (
                 generate_system_prompt(system_prompt=self.system_prompt, tools=self.tools, sub_agents=self.sub_agents)
             )
-        user_prompt = Prompt(role='user', content=prompt)
         self.memory.update(self.system_prompt)
-        self.memory.update(user_prompt)
 
+    def run(self, prompt: str):
+        user_prompt = Prompt(role='user', content=prompt)
+        self.memory.update(user_prompt)
         resp = self._loop()
         return resp
 

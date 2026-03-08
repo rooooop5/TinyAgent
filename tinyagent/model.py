@@ -16,9 +16,9 @@ class Model:
             'format': 'json',
             'options': {'temperature': 0},
         }
+    
         with requests.post(
             'https://ollama.com/api/chat', json=data, headers={'Authorization': f'Bearer {os.getenv("OLLAMA_API_KEY")}'}
         ) as response:
-            pprint(response.json())
             model_response = ModelResponse(**response.json()['message'])
             return model_response
