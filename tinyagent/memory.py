@@ -34,13 +34,11 @@ class DatabaseMemoryMangager:
         self.connection_obj.commit()
 
 
-
 class Memory:
     def __init__(self, agent_name: str):
         self.agent_name = agent_name
-        self._database_memory_manager=DatabaseMemoryMangager(self.agent_name)
+        self._database_memory_manager = DatabaseMemoryMangager(self.agent_name)
         self._messages: list[dict] = self._database_memory_manager._load_from_memory()
-        self.exit=False
 
     @property
     def messages(self) -> list[dict]:
@@ -49,13 +47,11 @@ class Memory:
     @messages.setter
     def messages(self, messages: list[dict]):
         self._messages = messages
-    
-    def save(self,prompt_list:list[dict]):
+
+    def save(self, prompt_list: list[dict]):
         for prompt in prompt_list:
             self._messages.append(prompt)
-        if self.exit:
-            self.save_to_database(prompt_list)
-    
-    def save_to_database(self,prompt_list:list[dict]):
+
+    def save_to_database(self, prompt_list: list[dict]):
         for prompt in prompt_list:
             self._database_memory_manager._append_memory(prompt)
