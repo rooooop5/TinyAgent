@@ -36,31 +36,23 @@ class Agent:
             [self.system_prompt_builder.system_prompt] + self.memory.messages + [{'role': 'user', 'content': prompt}]
         )
 
-        resp,new_messages = self._loop(messages)
-        print(new_messages)
-        
+        resp, new_messages = self._loop(messages)
+       # preferably, add only the news rows now the entire messages list
+       # now adding only new rows to memory and the database
         self.memory.save(new_messages)
         self.memory.save_to_database(new_messages)
-        # Remove system prompt
-        messages.pop(0)
-
-        # Set the updated conversation history to memory
-        # self.memory.messages = messages
-        # preferably, add only the news rows now the entire messages list
-        # self.memory.save(messages[-1])
-        # self.memory.save(messages[-2])
 
         return resp
 
     def _loop(self, messages: list[dict]):
         while True:
-            new_messages=[]
+            new_messages = []
             resp: ModelResponse = self.model.prompt(messages)
             new_messages.append(messages[-1])
             new_messages.append(resp.model_dump())
 
             if resp.content.exit:
-                return resp.content.response,new_messages
+                return resp.content.response, new_messages
 
             if resp.content.tool_calls:
                 for tool_call in resp.content.tool_calls:
