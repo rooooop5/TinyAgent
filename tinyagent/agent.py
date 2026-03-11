@@ -46,7 +46,8 @@ class Agent:
     def _loop(self, messages: list[dict]):
         while True:
             new_messages = []
-            resp: ModelResponse = self.model.prompt(messages)
+            #resp: ModelResponse = self.model.prompt(messages)
+            resp:ModelResponse=self._get_valid_response(messages)
             new_messages.append(messages[-1])
             new_messages.append(resp.model_dump())
 
@@ -68,13 +69,15 @@ class Agent:
                     sub_agent_resp = sub_agent.run(sub_agent_prompt)
                     new_messages.append(ToolCallResult(tool_call_id=sub_agent_id, content=sub_agent_resp).model_dump())
 
-    def _get_valid_response(self):
-        for _ in range(3):
-            resp: ModelResponse = self.model.prompt(self.memory.messages)
+    def _get_valid_response(self,messages):
+        tries=3
+        while(tries>0):
+            resp: ModelResponse = self.model.prompt(messages)
             if not self.response_type:
                 return resp
             if self._validate_response_format(resp.content.response):
                 return resp
+            tries-=1
         raise ValueError('Unable to provide structured output')
 
     def _validate_response_format(self, response):
