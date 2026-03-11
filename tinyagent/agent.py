@@ -8,6 +8,7 @@ from tinyagent.system_prompt import SystemPromptBuilder
 from tinyagent.tool import Tool
 from tinyagent.memory import Memory
 
+
 class Agent:
     def __init__(
         self,
@@ -23,21 +24,17 @@ class Agent:
         self.tools: Mapping[str, Tool] = {}
         self.sub_agents: Mapping[str, Self] = {}
         self.response_type = response_type
-        self.system_prompt_builder = SystemPromptBuilder(system_prompt=system_prompt,response_type=self.response_type)
+        self.system_prompt_builder = SystemPromptBuilder(system_prompt=system_prompt, response_type=self.response_type)
         self.memory = Memory(name)
 
     def run(self, prompt: str):
-        # Build conversation history from:
-        # - stored message history from database
-        # - system prompt
-        # - current user prompt
+
         messages = (
             [self.system_prompt_builder.system_prompt] + self.memory.messages + [{'role': 'user', 'content': prompt}]
         )
 
         resp, new_messages = self._loop(messages)
-       # preferably, add only the news rows now the entire messages list
-       # now adding only new rows to memory and the database
+
         self.memory.save(new_messages)
         self.memory.save_to_database(new_messages)
 
@@ -46,8 +43,8 @@ class Agent:
     def _loop(self, messages: list[dict]):
         while True:
             new_messages = []
-            #resp: ModelResponse = self.model.prompt(messages)
-            resp:ModelResponse=self._get_valid_response(messages)
+
+            resp: ModelResponse = self._get_valid_response(messages)
             new_messages.append(messages[-1])
             new_messages.append(resp.model_dump())
 
@@ -69,15 +66,15 @@ class Agent:
                     sub_agent_resp = sub_agent.run(sub_agent_prompt)
                     new_messages.append(ToolCallResult(tool_call_id=sub_agent_id, content=sub_agent_resp).model_dump())
 
-    def _get_valid_response(self,messages):
-        tries=3
-        while(tries>0):
+    def _get_valid_response(self, messages):
+        tries = 3
+        while tries > 0:
             resp: ModelResponse = self.model.prompt(messages)
             if not self.response_type:
                 return resp
             if self._validate_response_format(resp.content.response):
                 return resp
-            tries-=1
+            tries -= 1
         raise ValueError('Unable to provide structured output')
 
     def _validate_response_format(self, response):

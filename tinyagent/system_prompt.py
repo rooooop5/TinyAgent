@@ -59,18 +59,19 @@ SUB_AGENT_DEFINITION = """
 
 
 class SystemPromptBuilder:
-    def __init__(self, system_prompt: str | None = None,response_type:BaseModel | None=None):
+    def __init__(self, system_prompt: str | None = None, response_type: BaseModel | None = None):
         if system_prompt:
             self.system_prompt = {'role': 'system', 'content': system_prompt}
         else:
             self.system_prompt = {'role': 'system', 'content': ''}
         if response_type:
-            self.system_prompt['content'] += '\n\n' + jinja2.Template(DEFAULT_RESPONSE_PROMPT_WITH_RESPONSE_TYPE).render(
-            response_schema=Content.model_json_schema(),response_type=response_type.model_json_schema())
+            self.system_prompt['content'] += '\n\n' + jinja2.Template(
+                DEFAULT_RESPONSE_PROMPT_WITH_RESPONSE_TYPE
+            ).render(response_schema=Content.model_json_schema(), response_type=response_type.model_json_schema())
         else:
             self.system_prompt['content'] += '\n\n' + jinja2.Template(DEFAULT_RESPONSE_PROMPT).render(
-            response_schema=Content.model_json_schema()
-        )
+                response_schema=Content.model_json_schema()
+            )
 
         self.tool_template = jinja2.Template(TOOL_DEFINITION)
         self.sub_agent_template = jinja2.Template(SUB_AGENT_DEFINITION)

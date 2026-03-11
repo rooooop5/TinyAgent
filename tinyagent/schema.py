@@ -1,5 +1,5 @@
 import json
-from typing import Literal,Any
+from typing import Literal, Any
 
 from pydantic import BaseModel, Field, Json, field_serializer, field_validator
 
